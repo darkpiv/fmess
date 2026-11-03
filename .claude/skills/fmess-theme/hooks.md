@@ -97,6 +97,9 @@ emoji picker.
 | Seen receipt (reader's 14px picture under your last message) | `[data-scope="messages_table"] > div:not([role]) > div > span > img` (Teams swaps it for an eye with `content:`) |
 | Reaction pill under a bubble (white, radius 10, shadow) | `[data-scope="messages_table"] [role="button"] > span > div[role="none"]:has(> div > div > span > img)`; style what is inside through a `@container style()` flag |
 | Sender's name above a group's messages | `[data-scope="messages_table"] h4 span` |
+| Composer parts (fork addition, 09-marks) | `[data-fmess-ui="composer-field"]` (the box's part), `[data-fmess-ui="composer-tools"]` (the buttons' group before it); the composer's marks are redone by a MutationObserver before the next paint, so no flash and no `:has(path[d^=…])` needed |
+| Rows with a date / reactions (fork addition) | `[data-scope="messages_table"] > [data-fmess-date]`, `> [data-fmess-reacted]` (instead of a descendant `:has()` on every row) |
+| Who wrote what (fork addition, 09-marks) | name headings: `h4[data-fmess-sender="me"\|"them"]`, full name in `data-fmess-sender-name` (yours, or the other person's in a 1:1 chat); message rows (`[data-scope="messages_table"] > *`): the same two (your handle for yours) `data-fmess-sender-repeat` when the previous message is by the same sender, and `data-fmess-time="14:32"` (from the messages table, newest 1000 of the open chat) |
 | Unread chat row | the row's link holds Messenger's unread dot, a `[role="button"]`; read rows: `a[role="link"]:not(:has([role="button"]))` |
 | Row picture box (68px, 56px picture inside) | `[role="row"] a[role="link"] > div > div > div:first-child`; resize the picture with `zoom` on its child (it holds the presence dot and group pictures too) |
 | Header picture (40px) | `[data-fmess-ui="chat-header"] a[role="link"] > div > div > div:first-child` |

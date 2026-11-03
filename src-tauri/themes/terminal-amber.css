@@ -290,7 +290,7 @@ html[data-fmess-chats] [data-fmess-list] [role="row"] a[role="link"] {
   --hover-overlay: transparent !important;
 }
 html[data-fmess-chats] [data-fmess-list] [role="row"] a[role="link"] > div {
-  min-height: 40px !important;
+  min-height: 30px !important;
   margin: 0 !important;
   --x-paddingBlock: 4px !important;
   --x-paddingInline: 14px !important;
@@ -335,8 +335,10 @@ html[data-fmess-chats] [data-fmess-list] [role="row"] a[role="link"][aria-curren
     font-size: 13px !important;
     line-height: 18px !important;
   }
-  div[style*="height: 8px"] {
-    height: 2px !important;
+  /* Just the name: no line 2 (the latest message and its time). */
+  div[style*="height: 8px"],
+  div[style*="height: 8px"] + div {
+    display: none !important;
   }
 }
 
@@ -367,7 +369,7 @@ html[data-fmess-chats] [role="main"] :is(:is([aria-label="Start a voice call"], 
 }
 
 /* Messages: lines of a session. Every row starts at the left; yours carry
-   the "$" prompt and bright text, theirs are plain output. Your rows are the
+   bright text, theirs are plain output. Your rows are the
    ones whose first column is the read-receipt one (Teams' --tm-own);
    Messenger lays them out reversed, at the right: here they are turned back
    to the left. */
@@ -376,13 +378,68 @@ html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="pres
      and the reaction pills from the row's edge, so padding left them
      behind, over the picture and the text. */
   position: relative !important;
-  margin-left: 22px !important;
-  width: calc(100% - 22px) !important;
+  margin-left: 200px !important;
+  width: calc(100% - 200px) !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
   box-sizing: border-box !important;
 }
+/* Theirs and yours start at the same place: Messenger pads the two sides
+   differently (the picture's gap, your side's edge), so the columns lose
+   their side margins and padding, and your read receipt goes after the
+   text. */
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"] > [role="presentation"] {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+/* IRC's log: every line "14:32  name: text", the time and the names in
+   columns of their own (names right-aligned), so every message starts at
+   the same place. fMess gives each row its time (data-fmess-time). fMess marks
+   each message's row with its sender (data-fmess-sender-name: your handle,
+   their full name or the group's name for them); a line by the same
+   sender as the one before it shows no name, and a new sender
+   leaves a little space. */
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [data-fmess-sender-name]::before {
+  content: attr(data-fmess-sender-name) ":";
+  position: absolute;
+  left: -152px;
+  top: 3px;
+  width: 140px;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--t-name);
+  font: 700 13px/20px var(--t-mono);
+  pointer-events: none;
+}
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [data-fmess-time]::after {
+  content: attr(data-fmess-time);
+  position: absolute;
+  left: -188px;
+  top: 3px;
+  color: var(--t-dim);
+  font: 400 12px/20px var(--t-mono);
+  pointer-events: none;
+}
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [data-fmess-sender="me"]::before {
+  color: var(--t-prompt);
+}
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [data-fmess-sender-repeat]::before {
+  content: none;
+}
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [data-fmess-sender-name] {
+  padding-top: 3px !important;
+  padding-bottom: 3px !important;
+}
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [data-fmess-sender-name]:not([data-fmess-sender-repeat]) {
+  margin-top: 8px !important;
+}
 /* A line with reactions leaves room under it for their pills. */
-html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"]:has([role="button"] > span > div[role="none"] > div > div > span > img) {
-  padding-bottom: 10px !important;
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [data-fmess-reacted] {
+  padding-bottom: 18px !important;
 }
 html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"]:has(> [role="presentation"]:first-child > [role="presentation"] > [role="none"]) {
   flex-direction: row !important;
@@ -390,18 +447,14 @@ html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="pres
   --t-own: 1;
 }
 @container style(--t-own: 1) {
+  html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"] > [role="presentation"]:first-child {
+    order: 1;
+  }
+}
+@container style(--t-own: 1) {
   [role="presentation"] {
     align-items: flex-start !important;
   }
-}
-html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"]:has(> [role="presentation"]:first-child > [role="presentation"] > [role="none"])::before {
-  content: "$";
-  position: absolute;
-  left: -14px;
-  top: 0;
-  color: var(--t-prompt);
-  font: 700 13px/20px var(--t-mono);
-  pointer-events: none;
 }
 html[data-fmess-chats] [role="main"] [data-message-id] [role="presentation"] {
   border-radius: 0 !important;
@@ -422,55 +475,23 @@ html[data-fmess-chats] [role="main"] [data-message-id] a {
     display: none !important;
   }
 }
-/* Names over a group's messages: IRC's <name>. Messenger hides the name
-   in a 1:1 chat (it is only for screen readers); with no pictures it is
-   the only way to tell who spoke, so it is shown. Over your own lines
-   (their "$" says it) the heading stays out. */
+/* The headings over groups of messages ("You sent", a name): each line
+   has its sender's name now. */
 html[data-fmess-chats] [role="main"] [data-scope="messages_table"] h4 {
-  margin-inline-start: 0 !important;
-  padding-inline-start: 0 !important;
-}
-html[data-fmess-chats] [role="main"] [data-scope="messages_table"] h4 span {
-  position: static !important;
-  width: auto !important;
-  height: auto !important;
-  clip: auto !important;
-  clip-path: none !important;
-  overflow: visible !important;
-  white-space: nowrap !important;
-  opacity: 1 !important;
-  font-size: 13px !important;
-  line-height: 20px !important;
-  font-weight: 700 !important;
-  color: var(--t-name) !important;
-}
-@container style(--t-own: 1) {
-  html[data-fmess-chats] [role="main"] [data-scope="messages_table"] h4 {
-    display: none !important;
-  }
-}
-html[data-fmess-chats] [role="main"] [data-scope="messages_table"] h4 span:not(:has(span))::before {
-  content: "<";
-  color: var(--t-dim);
-  font: 700 13px/20px var(--t-mono);
-}
-html[data-fmess-chats] [role="main"] [data-scope="messages_table"] h4 span:not(:has(span))::after {
-  content: ">";
-  color: var(--t-dim);
-  font: 700 13px/20px var(--t-mono);
+  display: none !important;
 }
 /* Dates: a log separator. */
+/* A date can share a row with the message after it, so its row stays in
+   the column like the others; the date reaches back over the names, and
+   the message's name goes under it (8 + 20 + 8px). */
 html[data-fmess-chats] [role="main"] [data-scope="date_break"] {
-  margin: 0 !important;
+  margin: 0 0 0 -200px !important;
   padding: 8px 0 !important;
   background: transparent !important;
 }
-html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"]:has([data-scope="date_break"]) {
-  margin-left: 0 !important;
-  width: 100% !important;
-}
-html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"]:has([data-scope="date_break"])::before {
-  content: none;
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [data-fmess-date]::before,
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [data-fmess-date]::after {
+  top: 39px;
 }
 html[data-fmess-chats] [role="main"] [data-scope="date_break"] > span > span {
   display: inline-block !important;
@@ -509,6 +530,9 @@ html[data-fmess-chats] [role="main"] [data-scope="messages_table"] [role="button
   border-radius: 0 !important;
   background: var(--t-bg-2) !important;
   box-shadow: none !important;
+  /* Messenger tucks the pill over the bubble's bottom edge; with no bubble
+     that edge is the text's, so the pill goes 8px lower, clear of it. */
+  translate: 0 8px;
 }
 /* A message's hover actions (react, reply, more): they float over the line
    at its right, a flat box with a hard shadow, so hovering doesn't move the
@@ -539,7 +563,7 @@ html[data-fmess-chats] [role="main"] [role="toolbar"] > [role="presentation"] > 
   box-shadow: 3px 3px 0 var(--t-shadow) !important;
 }
 
-/* Composer: the shell prompt. "user@fmess:~$" in the prompt's colours
+/* Composer: the shell prompt. "<handle>@messenger:~$" in the prompt's colours
    before the box, a blinking block while it is empty, the send button a
    reverse-video "⏎". Messenger's 👍 (marked "send" on an empty box too)
    keeps its own look. */
@@ -557,20 +581,25 @@ html[data-fmess-chats] [role="main"] [role="region"]:is([aria-label="Thread comp
   border-radius: 0 !important;
   background: transparent !important;
 }
-:is([aria-label="Thread composer"], [data-fmess-ui="composer"]) > div:has([role="textbox"]) {
+[data-fmess-ui="composer-field"] {
   position: relative !important;
-  padding-left: 14.5ch !important;
+  /* "<handle>@messenger:~$ " is the handle + 13 characters; fMess gives the
+     handle and its length (--fmess-handle, from your account), "user" until
+     it has. */
+  --t-handle-chars: var(--fmess-handle-length, 4);
+  padding-left: calc((var(--t-handle-chars) + 14.5) * 1ch) !important;
   font: 13px/20px var(--t-mono) !important;
 }
-:is([aria-label="Thread composer"], [data-fmess-ui="composer"]) > div:has([role="textbox"])::before {
-  content: "user@fmess:~$";
+[data-fmess-ui="composer-field"]::before {
+  content: var(--fmess-handle, "user") "@messenger:~$";
   position: absolute;
   left: 4px;
   top: 50%;
   translate: 0 -50%;
   font: 700 13px/20px var(--t-mono);
   white-space: pre;
-  background: linear-gradient(90deg, var(--t-prompt) 0 10ch, var(--t-fg) 10ch 11ch, var(--t-accent) 11ch 12ch, var(--t-fg) 12ch);
+  --t-at: calc((var(--t-handle-chars) + 10) * 1ch);
+  background: linear-gradient(90deg, var(--t-prompt) 0 var(--t-at), var(--t-fg) var(--t-at) calc(var(--t-at) + 1ch), var(--t-accent) calc(var(--t-at) + 1ch) calc(var(--t-at) + 2ch), var(--t-fg) calc(var(--t-at) + 2ch));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -589,6 +618,59 @@ html[data-fmess-chats] [role="main"] [role="region"]:is([aria-label="Thread comp
   color: var(--t-cursor);
   font: 13px/20px var(--t-mono);
   animation: t-blink 1s steps(1) infinite;
+}
+/* Only Messenger's "+", just left of the emoji: "+ 😊 👍". The voice clip,
+   sticker and GIF buttons go (they are in the "+" menu too), and with them
+   the animation Messenger plays as they fold away while you type. Messenger
+   shows attach while the box is empty and "+" while you type, in one place:
+   attach stays only while there is no "+". fMess marks them again
+   as soon as Messenger draws them again, before the next paint.
+   The emoji is inside the box and the buttons outside it, so the buttons'
+   group is placed against the emoji's left edge (CSS anchor positioning,
+   WebKit of macOS 26), in a gap the emoji leaves. */
+:is([aria-label="Thread composer"], [data-fmess-ui="composer"]) div:has(> span :is([data-fmess-ui="voice-clip"], [data-fmess-ui="sticker"], [data-fmess-ui="gif"])) {
+  display: none !important;
+}
+:is([aria-label="Thread composer"], [data-fmess-ui="composer"]):has(:is([data-fmess-ui="more-actions"], [aria-label="Open more actions"])) {
+  --t-more: 1;
+}
+@container style(--t-more: 1) {
+  :is([aria-label="Thread composer"], [data-fmess-ui="composer"]) div:has(> span [data-fmess-ui="attach"]) {
+    display: none !important;
+  }
+}
+:is([aria-label="Thread composer"], [data-fmess-ui="composer"]) {
+  position: relative !important;
+}
+:is([aria-label="Thread composer"], [data-fmess-ui="composer"]) :is([data-fmess-ui="emoji"], [aria-label="Choose an emoji"]) {
+  anchor-name: --t-emoji;
+  margin-left: 36px !important;
+}
+[data-fmess-ui="composer-tools"] {
+  position: absolute !important;
+  position-anchor: --t-emoji;
+  right: anchor(left);
+  top: anchor(top);
+  bottom: anchor(bottom);
+  display: flex !important;
+  align-items: center !important;
+  margin: 0 !important;
+}
+[data-fmess-ui="composer-field"] {
+  order: 1;
+}
+:is([aria-label="Thread composer"], [data-fmess-ui="composer"]) > span {
+  order: 3;
+}
+/* No round press/hover fill on them. */
+[data-fmess-ui="composer-tools"] [role="button"] {
+  background: transparent !important;
+  --hover-overlay: transparent !important;
+  --press-overlay: transparent !important;
+}
+[data-fmess-ui="composer-tools"] {
+  transition: none !important;
+  animation: none !important;
 }
 :is([aria-label="Thread composer"], [data-fmess-ui="composer"]) :is(:is([aria-label="Attach a file up to 100 MB"], [data-fmess-ui="attach"]), :is([aria-label="Open more actions"], [data-fmess-ui="more-actions"]), :is([aria-label="Choose a sticker"], [data-fmess-ui="sticker"]), :is([aria-label="Choose a GIF"], [data-fmess-ui="gif"]), :is([aria-label="Choose an emoji"], [data-fmess-ui="emoji"]), :is([aria-label="Send a voice clip"], [data-fmess-ui="voice-clip"])) {
   border-radius: 0 !important;

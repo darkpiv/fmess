@@ -30,11 +30,31 @@
     if (!me) return;
     await loadModules(['LSDatabaseSingleton']);
     const db = await window.require('LSDatabaseSingleton').LSDatabaseSingleton;
-    contactPicture = (await db.tables.contacts.get(int64Key(me)))?.profilePictureUrl || contactPicture;
+    const contact = await db.tables.contacts.get(int64Key(me));
+    contactPicture = contact?.profilePictureUrl || contactPicture;
     // A theme can show your picture and name (var(--fmess-avatar), attr(data-fmess-name)).
     const root = document.documentElement;
     if (contactPicture) root.style.setProperty('--fmess-avatar', `url("${contactPicture}")`);
     root.setAttribute('data-fmess-name', window.require('CurrentUserInitialData').NAME || '');
+    setHandle(contact?.username);
+  };
+  // A short handle for a theme's prompt (the Terminal look's "<handle>@messenger"):
+  // your Facebook username when Messenger's contact entry has one, else your
+  // name in lower case without accents or spaces ("Nguyễn Văn A" → "nguyenvana").
+  // --fmess-handle is a CSS string, --fmess-handle-length its length in
+  // characters (to size the prompt).
+  const setHandle = (username) => {
+    let name = '';
+    try {
+      name = window.require('CurrentUserInitialData').NAME || '';
+    } catch {}
+    const handle = (typeof username === 'string' && username) ||
+      name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
+    const safe = handle.replace(/[^a-z0-9._-]/gi, '').slice(0, 24);
+    if (!safe) return;
+    const root = document.documentElement;
+    root.style.setProperty('--fmess-handle', `"${safe}"`);
+    root.style.setProperty('--fmess-handle-length', String(safe.length));
   };
   const currentAccount = () => {
     try {
@@ -50,7 +70,7 @@
     }
   };
   if (!window.opener) {
-    window.addEventListener('load', () => setTimeout(() => readContactPicture().catch(() => {}), 2000));
+    window.addEventListener('load', () => setTimeout(() => readContactPicture().catch(() => setHandle()), 2000));
     // Picture links expire; Messenger refreshes the entry.
     setInterval(() => readContactPicture().catch(() => {}), 10 * 60 * 1000);
   }
