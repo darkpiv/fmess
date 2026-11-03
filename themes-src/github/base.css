@@ -1,0 +1,744 @@
+/* Messenger as a pull request's "Files changed" page: the chat list is the
+   file tree, a chat is one file's diff. Your messages are added lines (+,
+   green), theirs removed lines (−, red), each with its line numbers in the
+   gutter; dates are hunk headers (@@ … @@); the composer is the review
+   comment box with its green button. Colours are Primer's (GitHub's design
+   system, @primer/primitives 10.4.0, functional/themes light.css and
+   dark.css); icons are Octicons (MIT). Fonts: GitHub's own system stacks,
+   nothing bundled. */
+
+/* Primer's colours, light and, while Messenger is dark, dark. Dark diff
+   colours are Primer's translucent ones laid over #0d1117 ahead of time, so
+   a bubble on its line doesn't paint them twice. */
+:root {
+  --gh-canvas: #ffffff;            /* bgColor-default */
+  --gh-subtle: #f6f8fa;            /* bgColor-muted */
+  --gh-border: #d1d9e0;            /* borderColor-default */
+  --gh-border-muted: #d1d9e0b3;    /* borderColor-muted */
+  --gh-fg: #1f2328;                /* fgColor-default */
+  --gh-fg-muted: #59636e;          /* fgColor-muted */
+  --gh-accent: #0969da;            /* fgColor-accent */
+  --gh-accent-emphasis: #0969da;   /* bgColor-accent-emphasis */
+  --gh-accent-muted: #ddf4ff;      /* bgColor-accent-muted */
+  --gh-on-emphasis: #ffffff;       /* fgColor-onEmphasis */
+  --gh-btn: #f6f8fa;               /* button-default-bgColor-rest */
+  --gh-btn-hover: #eff2f5;         /* button-default-bgColor-hover */
+  --gh-primary: #1f883d;           /* button-primary-bgColor-rest */
+  --gh-primary-hover: #1c8139;     /* button-primary-bgColor-hover */
+  --gh-hover: #818b981a;           /* control-transparent-bgColor-hover */
+  --gh-selected: #818b9826;        /* control-transparent-bgColor-selected */
+  --gh-neutral-muted: #818b981f;   /* bgColor-neutral-muted (Counter) */
+  --gh-add-line: #dafbe1;          /* diffBlob-additionLine-bgColor */
+  --gh-add-num: #aceebb;           /* diffBlob-additionNum-bgColor */
+  --gh-del-line: #ffebe9;          /* diffBlob-deletionLine-bgColor */
+  --gh-del-num: #ffcecb;           /* diffBlob-deletionNum-bgColor */
+  --gh-hunk-line: #ddf4ff;         /* diffBlob-hunkLine-bgColor */
+  --gh-hunk-num: #b6e3ff;          /* diffBlob-hunkNum-bgColor-rest */
+  --gh-nav-active: #fd8c73;        /* underlineNav-borderColor-active */
+  --gh-selection: #0969da33;       /* selection-bgColor */
+  --gh-overlay: #ffffff;           /* overlay-bgColor */
+  --gh-tooltip: #25292e;           /* tooltip-bgColor */
+  --gh-danger: #cf222e;            /* bgColor-danger-emphasis */
+  --gh-attention: #9a6700;         /* fgColor-attention */
+  --gh-attention-muted: #fff8c5;   /* bgColor-attention-muted */
+  --gh-attention-emphasis: #9a6700; /* bgColor-attention-emphasis */
+  --gh-empty-line: #f6f8fa;        /* diffBlob-emptyLine-bgColor */
+  --gh-shadow: 0 0 0 1px #d1d9e080, 0 6px 12px -3px #25292e0a, 0 6px 18px 0 #25292e1f; /* shadow-floating-small */
+}
+html[data-fmess-dark] {
+  --gh-canvas: #0d1117;
+  --gh-subtle: #151b23;
+  --gh-border: #3d444d;
+  --gh-border-muted: #3d444db3;
+  --gh-fg: #f0f6fc;
+  --gh-fg-muted: #9198a1;
+  --gh-accent: #4493f8;
+  --gh-accent-emphasis: #1f6feb;
+  --gh-accent-muted: #388bfd1a;
+  --gh-on-emphasis: #ffffff;
+  --gh-btn: #212830;
+  --gh-btn-hover: #262c36;
+  --gh-primary: #238636;
+  --gh-primary-hover: #29903b;
+  --gh-hover: #656c7633;
+  --gh-selected: #656c761a;
+  --gh-neutral-muted: #656c7633;
+  --gh-add-line: #12261e;          /* #2ea04326 over #0d1117 */
+  --gh-add-num: #1c4428;           /* #3fb9504d over #0d1117 */
+  --gh-del-line: #25171c;          /* #f851491a over #0d1117 */
+  --gh-del-num: #542426;           /* #f851494d over #0d1117 */
+  --gh-hunk-line: #111d2f;         /* #388bfd1a over #0d1117 */
+  --gh-hunk-num: #0c2d6b;
+  --gh-nav-active: #f78166;
+  --gh-selection: #1f6febb3;
+  --gh-overlay: #151b23;
+  --gh-tooltip: #3d444d;
+  --gh-danger: #da3633;
+  --gh-attention: #d29922;
+  --gh-attention-muted: #272215;   /* #bb800926 over #0d1117 */
+  --gh-attention-emphasis: #9e6a03;
+  --gh-empty-line: #151b23;
+  --gh-shadow: 0 0 0 1px #3d444d, 0 6px 12px -3px #01040966, 0 6px 18px 0 #01040966;
+}
+
+/* Messenger's own colours, in Primer's. */
+:root,
+.__fb-dark-mode,
+.__fb-light-mode,
+[style*="--chat-outgoing-message-bubble-background-color"] {
+  --accent: var(--gh-accent) !important;
+  --primary-button-background: var(--gh-accent-emphasis) !important;
+  --primary-deemphasized-button-background: var(--gh-accent-muted) !important;
+  --primary-deemphasized-button-text: var(--gh-accent) !important;
+  --text-highlight: var(--gh-selection) !important;
+  --primary-text: var(--gh-fg) !important;
+  --primary-icon: var(--gh-fg-muted) !important;
+  --secondary-text: var(--gh-fg-muted) !important;
+  --secondary-icon: var(--gh-fg-muted) !important;
+  --placeholder-text: var(--gh-fg-muted) !important;
+  --placeholder-icon: var(--gh-fg-muted) !important;
+  --blue-link: var(--gh-accent) !important;
+  --divider: var(--gh-border) !important;
+  --web-wash: var(--gh-canvas) !important;
+  --surface-background: var(--gh-canvas) !important;
+  --card-background: var(--gh-canvas) !important;
+  --messenger-card-background: var(--gh-canvas) !important;
+  --comment-background: var(--gh-subtle) !important;
+  --input-background: var(--gh-canvas) !important;
+  --secondary-button-background: var(--gh-btn) !important;
+  --hover-overlay: var(--gh-hover) !important;
+  --popover-background: var(--gh-overlay) !important;
+  --notification-badge: var(--gh-danger) !important;
+  --focus-ring-blue: var(--gh-accent-emphasis) !important;
+
+  --chat-bubble-border-radius: 0 !important;
+  --chat-bubble-padding-vertical: 0 !important;
+  --chat-bubble-padding-horizontal: 4px !important;
+  --chat-outgoing-message-bubble-background-color: var(--gh-add-line) !important;
+  --chat-outgoing-message-background-gradient: initial !important;
+  --chat-outgoing-message-text-color: var(--gh-fg) !important;
+  --chat-incoming-message-bubble-background-color: var(--gh-del-line) !important;
+  --chat-message-text-color: var(--gh-fg) !important;
+  --chat-incoming-message-text-color: var(--gh-fg) !important;
+  --chat-admin-text-color: var(--gh-fg-muted) !important;
+  --chat-replied-message-background-color: var(--gh-subtle) !important;
+  --chat-composer-background-color: transparent !important;
+  --chat-composer-input-background-color: transparent !important;
+  --chat-composer-button-color: var(--gh-fg-muted) !important;
+  --chat-composer-caret-color: var(--gh-fg) !important;
+  --chat-edit-message-overlay-color: var(--gh-hover) !important;
+  --chat-scrollbar-thumb-color: var(--gh-border) !important;
+  --mwp-primary-theme-color: var(--gh-accent-emphasis) !important;
+  --mwp-header-background-color: var(--gh-subtle) !important;
+  --mwp-header-button-color: var(--gh-fg-muted) !important;
+  --mwp-header-text-color: var(--gh-fg) !important;
+  --mwp-subheader-text-color: var(--gh-fg-muted) !important;
+  --mwp-message-row-background: transparent !important;
+  --reaction-pill-background-color: var(--gh-canvas) !important;
+  --reaction-pill-multireact-selected-color: var(--gh-accent-muted) !important;
+}
+
+/* GitHub's type: the system UI stack, and its code stack for the diff. */
+:root {
+  --gh-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --gh-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace, "Apple Color Emoji", "Segoe UI Emoji";
+}
+html,
+html body,
+html :is(div, span, a, h1, h2, h3, h4, input, textarea, button, label, p) {
+  font-family: var(--gh-font) !important;
+}
+
+/* The strip under the window buttons: GitHub's grey header with its line. */
+html[data-fmess-chats]::before {
+  content: "";
+  position: fixed;
+  z-index: 2147483000;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--fmess-title-bar, 0px);
+  background: var(--gh-subtle);
+  box-shadow: inset 0 -1px 0 var(--gh-border);
+  pointer-events: none;
+}
+/* Nothing of the theme's over the photo viewer. */
+html[data-fmess-media]::before,
+html[data-fmess-media]::after {
+  display: none !important;
+}
+
+/* Chat list: the file tree. White, a line at its right, 14px names, the
+   open file grey with Primer's blue bar at its left. */
+html[data-fmess-chats] [data-fmess-list] {
+  background: var(--gh-canvas) !important;
+}
+html[data-fmess-chats] [data-fmess-list] h1,
+html[data-fmess-chats] [data-fmess-list] h1 span {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  line-height: 24px !important;
+}
+/* New message and ⋯ as Primer's invisible icon buttons (32px, 6px corners). */
+html[data-fmess-chats] [data-fmess-list] :is([aria-label="Settings, help and more"], [data-fmess-ui="list-menu"], a[href="/messages/new/"]) {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 6px !important;
+  --secondary-button-background: transparent !important;
+  --hover-overlay: var(--gh-hover) !important;
+}
+html[data-fmess-chats] [data-fmess-list] :is([aria-label="Settings, help and more"], [data-fmess-ui="list-menu"], a[href="/messages/new/"]) svg {
+  width: 16px !important;
+  height: 16px !important;
+  background: var(--gh-fg-muted);
+}
+html[data-fmess-chats] [data-fmess-list] :is([aria-label="Settings, help and more"], [data-fmess-ui="list-menu"], a[href="/messages/new/"]) svg * {
+  visibility: hidden;
+}
+html[data-fmess-chats] [data-fmess-list] :is([aria-label="Settings, help and more"], [data-fmess-ui="list-menu"]) svg {
+  -webkit-mask: {{icon:kebab-horizontal-16}} center / 16px 16px no-repeat;
+}
+html[data-fmess-chats] [data-fmess-list] a[href="/messages/new/"] svg {
+  -webkit-mask: {{icon:plus-16}} center / 16px 16px no-repeat;
+}
+/* Search: Primer's text input ("Filter files…"): 32px, 1px line, 6px
+   corners, a blue ring while focused. Messenger's placeholder stays (it is
+   translated). */
+html[data-fmess-chats] [data-fmess-list] label:has(input[type="search"]) {
+  height: 32px !important;
+  box-sizing: border-box !important;
+  border: 1px solid var(--gh-border) !important;
+  border-radius: 6px !important;
+  background: var(--gh-canvas) !important;
+}
+html[data-fmess-chats] [data-fmess-list] label:has(input[type="search"]):focus-within {
+  border-color: var(--gh-accent-emphasis) !important;
+  box-shadow: inset 0 0 0 1px var(--gh-accent-emphasis) !important;
+}
+html[data-fmess-chats] [data-fmess-list] label > span > svg {
+  width: 16px !important;
+  height: 16px !important;
+  background: var(--gh-fg-muted);
+  -webkit-mask: {{icon:search-16}} center / 16px 16px no-repeat;
+}
+html[data-fmess-chats] [data-fmess-list] label > span > svg * {
+  visibility: hidden;
+}
+html[data-fmess-chats] [data-fmess-list] input[type="search"] {
+  font-size: 14px !important;
+}
+/* Filters as Primer's UnderlineNav: plain words, the current one bold with
+   GitHub's orange line under it. */
+html[data-fmess-chats] [data-fmess-list] [role="tablist"] {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  gap: 8px !important;
+  align-items: stretch !important;
+  box-shadow: inset 0 -1px 0 var(--gh-border-muted) !important;
+}
+html[data-fmess-chats] [data-fmess-list] [role="tablist"]::-webkit-scrollbar {
+  display: none;
+}
+html[data-fmess-chats] [data-fmess-list] [role="tablist"] > * {
+  flex: none !important;
+}
+html[data-fmess-chats] [data-fmess-list] [role="tablist"] > :not(:has([role="tab"])) {
+  display: none !important;
+}
+html[data-fmess-chats] [data-fmess-list] [role="tab"] {
+  height: 36px !important;
+  padding: 0 8px !important;
+  box-sizing: border-box !important;
+  border-radius: 6px 6px 0 0 !important;
+  background: transparent !important;
+  --hover-overlay: var(--gh-hover) !important;
+  --primary-deemphasized-button-text: var(--gh-fg) !important;
+  --primary-text: var(--gh-fg) !important;
+  --secondary-text: var(--gh-fg) !important;
+}
+html[data-fmess-chats] [data-fmess-list] [role="tab"][aria-selected="true"] {
+  box-shadow: inset 0 -2px 0 var(--gh-nav-active) !important;
+}
+html[data-fmess-chats] [data-fmess-list] [role="tab"] span {
+  font-size: 14px !important;
+  font-weight: 400 !important;
+}
+html[data-fmess-chats] [data-fmess-list] [role="tab"][aria-selected="true"] span {
+  font-weight: 600 !important;
+}
+/* Rows: Primer's TreeView items. 6px corners, a grey hover, the open one
+   grey with the 4px blue bar; 24px pictures where files have their icon. */
+html[data-fmess-chats] [data-fmess-list] [role="row"] {
+  padding-inline: 8px !important;
+}
+html[data-fmess-chats] [data-fmess-list] [role="row"] a[role="link"] {
+  border-radius: 6px !important;
+  --gh-row: 1;
+  --hover-overlay: transparent !important;
+}
+html[data-fmess-chats] [data-fmess-list] [role="row"] a[role="link"] > div {
+  min-height: 44px !important;
+  margin: 0 !important;
+  --x-paddingBlock: 6px !important;
+  --x-paddingInline: 12px !important;
+  padding: 6px 8px 6px 12px !important;
+}
+html[data-fmess-chats] [data-fmess-list] [role="row"] a[role="link"] > div > div > div:first-child {
+  flex: none !important;
+  width: 32px !important;
+  height: 32px !important;
+  margin-right: 8px !important;
+  padding: 0 !important;
+}
+html[data-fmess-chats] [data-fmess-list] [role="row"] a[role="link"] > div > div > div:first-child > div {
+  zoom: 0.571429;
+}
+html[data-fmess-chats] [data-fmess-list] [role="row"] a[role="link"] > div > div > div:nth-child(2) > div {
+  padding: 0 !important;
+}
+html[data-fmess-chats] [data-fmess-list] [role="row"] a[role="link"]:hover {
+  background: var(--gh-hover) !important;
+}
+html[data-fmess-chats] [data-fmess-list] [role="row"] a[role="link"][aria-current="page"] {
+  background:
+    linear-gradient(var(--gh-accent-emphasis), var(--gh-accent-emphasis)) 0 50% / 4px 24px no-repeat,
+    var(--gh-selected) !important;
+}
+@container style(--gh-row: 1) {
+  span[dir="auto"] {
+    font-size: 12px !important;
+    line-height: 18px !important;
+  }
+  div > span[dir="auto"]:first-child,
+  div > span[dir="auto"]:first-child span {
+    font-size: 14px !important;
+    line-height: 20px !important;
+  }
+  div[style*="height: 8px"] {
+    height: 2px !important;
+  }
+}
+
+/* The chat: one file's diff on white. */
+html[data-fmess-chats] [role="main"] [data-mw-file-dropzone] {
+  background: var(--gh-canvas) !important;
+  --messenger-card-background: transparent !important;
+}
+html[data-fmess-chats] [role="main"] [data-mw-file-dropzone] [style*="background-image"]:has([role="log"]) {
+  background: transparent !important;
+}
+
+/* Header: the file's header bar: grey, a line under it, the name in the
+   code font, Primer's 28px invisible buttons with Octicons. */
+html[data-fmess-chats] [role="main"] [data-fmess-ui="chat-header"] {
+  background: var(--gh-subtle) !important;
+  border-bottom: 1px solid var(--gh-border) !important;
+  box-shadow: none !important;
+}
+html[data-fmess-chats] [role="main"] [data-fmess-ui="chat-header"] :is(h1, h2, h3) span {
+  font-family: var(--gh-mono) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  line-height: 20px !important;
+  color: var(--gh-fg) !important;
+}
+html[data-fmess-chats] [role="main"] :is(:is([aria-label="Start a voice call"], [data-fmess-ui="audio-call"]), :is([aria-label="Start a video call"], [data-fmess-ui="video-call"]), :is([aria-label="Conversation information"], [data-fmess-ui="info"])) {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 6px !important;
+  background: transparent !important;
+  --hover-overlay: var(--gh-hover) !important;
+}
+html[data-fmess-chats] [role="main"] :is(:is([aria-label="Start a video call"], [data-fmess-ui="video-call"]), :is([aria-label="Conversation information"], [data-fmess-ui="info"])) svg {
+  width: 16px !important;
+  height: 16px !important;
+  background: var(--gh-fg-muted);
+}
+html[data-fmess-chats] [role="main"] :is(:is([aria-label="Start a video call"], [data-fmess-ui="video-call"]), :is([aria-label="Conversation information"], [data-fmess-ui="info"])) svg * {
+  visibility: hidden;
+}
+/* Octicons have no telephone: the voice call keeps Messenger's, in grey. */
+html[data-fmess-chats] [role="main"] :is([aria-label="Start a voice call"], [data-fmess-ui="audio-call"]) svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+html[data-fmess-chats] [role="main"] :is([aria-label="Start a video call"], [data-fmess-ui="video-call"]) svg {
+  -webkit-mask: {{icon:device-camera-video-16}} center / 16px 16px no-repeat;
+}
+html[data-fmess-chats] [role="main"] :is([aria-label="Conversation information"], [data-fmess-ui="info"]) svg {
+  -webkit-mask: {{icon:info-16}} center / 16px 16px no-repeat;
+}
+html[data-fmess-chats] [role="main"] :is([aria-label="Conversation information"], [data-fmess-ui="info"])[aria-expanded="true"] svg {
+  background: var(--gh-accent);
+}
+
+/* Messages: diff lines. Every message row is one line across the chat, in
+   the code font: the two line-number columns (old, new) in the gutter, then
+   the sign, then the text. Their messages are removed lines (old numbers,
+   −, red); yours are added lines (new numbers, +, green). Your rows are the
+   ones whose first column is the read-receipt one (Teams' --tm-own). */
+html[data-fmess-chats] [role="main"] [role="log"] {
+  counter-reset: gh-old gh-new;
+}
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"] {
+  /* Moved with a margin, not padding: Messenger places a reply's quote
+     and the reaction pills from the row's edge, so padding left them
+     behind. The line's colour reaches back under the gutter as a shadow. */
+  position: relative !important;
+  margin-left: 96px !important;
+  width: calc(100% - 96px) !important;
+  box-sizing: border-box !important;
+  background: var(--gh-del-line) !important;
+  box-shadow: -96px 0 0 var(--gh-del-line) !important;
+  counter-increment: gh-old;
+}
+/* A line with reactions leaves room under it for their pills. */
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"]:has([role="button"] > span > div[role="none"] > div > div > span > img) {
+  padding-bottom: 10px !important;
+}
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"]:has(> [role="presentation"]:first-child > [role="presentation"] > [role="none"]) {
+  background: var(--gh-add-line) !important;
+  box-shadow: -96px 0 0 var(--gh-add-line) !important;
+  counter-increment: gh-new;
+  --gh-own: 1;
+}
+/* The gutter: two 40px number columns, numbers at their right. */
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"]::before {
+  content: counter(gh-old);
+  position: absolute;
+  left: -96px;
+  top: 0;
+  bottom: 0;
+  width: 80px;
+  padding: 0 48px 0 0;
+  box-sizing: border-box;
+  background: var(--gh-del-num);
+  color: var(--gh-fg-muted);
+  font: 12px/20px var(--gh-mono);
+  text-align: right;
+  pointer-events: none;
+}
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"]:has(> [role="presentation"]:first-child > [role="presentation"] > [role="none"])::before {
+  content: counter(gh-new);
+  padding-right: 8px;
+  background: var(--gh-add-num);
+}
+/* The sign, in the first column of the code. */
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"]::after {
+  content: "\2212";
+  position: absolute;
+  left: -16px;
+  top: 0;
+  width: 16px;
+  color: var(--gh-fg);
+  font: 12px/20px var(--gh-mono);
+  text-align: center;
+  pointer-events: none;
+}
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"]:has(> [role="presentation"]:first-child > [role="presentation"] > [role="none"])::after {
+  content: "+";
+}
+/* The text: 12px code on a 20px line, square, no bubble of its own (it
+   has the line's colour). */
+html[data-fmess-chats] [role="main"] [data-message-id] [role="presentation"] {
+  border-radius: 0 !important;
+}
+html[data-fmess-chats] [role="main"] [data-message-id] [dir="auto"] {
+  font-family: var(--gh-mono) !important;
+  font-size: 12px !important;
+  line-height: 20px !important;
+}
+/* Their picture beside a line: 20px, the line's height, so a one-line
+   message sits level with it (Messenger's 28px stood below a 20px line).
+   The first column of their rows is the picture's; of yours, the
+   read receipt's, which keeps its size. */
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"] > [role="presentation"]:first-child {
+  zoom: 0.714286;
+}
+@container style(--gh-own: 1) {
+  html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"] > [role="presentation"]:first-child {
+    zoom: 1;
+  }
+}
+/* The sender's name over a group's lines: grey, like a blame line. */
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] h4 span {
+  font-family: var(--gh-mono) !important;
+  font-size: 12px !important;
+  line-height: 18px !important;
+  font-weight: 400 !important;
+  color: var(--gh-fg-muted) !important;
+}
+/* Someone typing: their picture in line with the messages' (Messenger sets
+   it 8px further left). */
+html[data-fmess-chats] [role="main"] [role="log"] [aria-hidden="true"]:not([data-message-id] *):has(> div[role="presentation"] + div [role="presentation"]) > div[role="presentation"]:first-child {
+  padding-left: 14px !important;
+}
+/* Reactions under a line: GitHub's reaction buttons, pills with a line. */
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] [role="button"] > span > div[role="none"]:has(> div > div > span > img) {
+  border: 1px solid var(--gh-border) !important;
+  border-radius: 100px !important;
+  background: var(--gh-canvas) !important;
+  box-shadow: none !important;
+}
+/* A line's hover actions (react, reply, more): Messenger's 28px buttons sit
+   in the row's flow, taller than a 20px line, so hovering grew the line.
+   They float over the line instead, as one small Primer overlay, away from
+   the text: at the line's right for theirs, after the gutter for yours
+   (your text is at the right). The toolbar and its column are made static
+   so the box is placed from the row (position: relative above). */
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] [role="toolbar"] {
+  position: static !important;
+}
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"] > [role="presentation"]:has(> [role="presentation"] > [role="toolbar"]) {
+  position: static !important;
+}
+html[data-fmess-chats] [role="main"] [role="toolbar"] > [role="presentation"] > [role="presentation"]:has([role="button"]) {
+  position: absolute !important;
+  z-index: 2 !important;
+  top: 50% !important;
+  translate: 0 -50%;
+  left: auto !important;
+  right: 8px !important;
+  flex-direction: row !important;
+  width: max-content !important;
+  max-width: none !important;
+  height: auto !important;
+  margin: 0 !important;
+  align-items: center !important;
+  padding: 2px !important;
+  border-radius: 6px !important;
+  background: var(--gh-overlay) !important;
+  box-shadow: var(--gh-shadow) !important;
+}
+@container style(--gh-own: 1) {
+  html[data-fmess-chats] [role="main"] [role="toolbar"] > [role="presentation"] > [role="presentation"]:has([role="button"]) {
+    left: 8px !important;
+    right: auto !important;
+  }
+}
+
+/* Dates: hunk headers, as a small label: the date between "@@"s in the
+   code font, on the hunk blue with a hairline, 6px corners, centred. (A
+   band across the chat didn't line up: the date row is inset from the
+   message lines, and its gutter block floated on its own.) */
+html[data-fmess-chats] [role="main"] [data-scope="date_break"] {
+  margin: 0 !important;
+  padding: 8px 0 !important;
+  background: transparent !important;
+}
+/* A message row holding the date is no diff line: no colour, gutter or
+   sign, and it doesn't count. */
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"]:has([data-scope="date_break"]) {
+  margin-left: 0 !important;
+  width: 100% !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  counter-increment: none;
+}
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"]:has([data-scope="date_break"])::before,
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"]:has([data-scope="date_break"])::after {
+  content: none;
+}
+html[data-fmess-chats] [role="main"] [data-scope="date_break"] > span > span {
+  display: inline-block !important;
+  height: 24px !important;
+  padding: 0 10px !important;
+  box-sizing: border-box !important;
+  border: 1px solid var(--gh-hunk-num) !important;
+  border-radius: 6px !important;
+  background: var(--gh-hunk-line) !important;
+  font-family: var(--gh-mono) !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  line-height: 22px !important;
+  white-space: nowrap !important;
+  color: var(--gh-fg-muted) !important;
+}
+html[data-fmess-chats] [role="main"] [data-scope="date_break"] > span > span::before {
+  content: "@@ ";
+}
+html[data-fmess-chats] [role="main"] [data-scope="date_break"] > span > span::after {
+  content: " @@";
+}
+
+/* Composer: the review comment box. A white field with a 1px line and 6px
+   corners (blue ring while typing), Octicons for attach, emoji and sticker;
+   GIF goes (the sticker panel has GIFs). Send is GitHub's green button with
+   the paper plane. Messenger's like button stays as it is: on an empty box
+   its 👍 is marked "send" too, so the green button is only drawn when the
+   button isn't that 👍. */
+html[data-fmess-chats] [role="main"] div:has(> :is([aria-label="Thread composer"], [data-fmess-ui="composer"])) {
+  background: var(--gh-canvas) !important;
+}
+html[data-fmess-chats] [role="main"] [role="region"]:is([aria-label="Thread composer"], [data-fmess-ui="composer"]) {
+  margin: 8px 16px 16px !important;
+  min-height: 44px !important;
+  padding: 0 6px !important;
+  box-sizing: border-box !important;
+  align-items: center !important;
+  border: 1px solid var(--gh-border) !important;
+  border-radius: 6px !important;
+  background: var(--gh-canvas) !important;
+}
+html[data-fmess-chats] [role="main"] [role="region"]:is([aria-label="Thread composer"], [data-fmess-ui="composer"]):focus-within {
+  border-color: var(--gh-accent-emphasis) !important;
+  box-shadow: inset 0 0 0 1px var(--gh-accent-emphasis) !important;
+}
+:is([aria-label="Thread composer"], [data-fmess-ui="composer"]) div:has(> span :is([aria-label="Choose a GIF"], [data-fmess-ui="gif"])) {
+  display: none !important;
+}
+:is([aria-label="Thread composer"], [data-fmess-ui="composer"]) :is(:is([aria-label="Attach a file up to 100 MB"], [data-fmess-ui="attach"]), :is([aria-label="Open more actions"], [data-fmess-ui="more-actions"]), :is([aria-label="Choose a sticker"], [data-fmess-ui="sticker"]), :is([aria-label="Choose an emoji"], [data-fmess-ui="emoji"])) {
+  border-radius: 6px !important;
+  --hover-overlay: var(--gh-hover) !important;
+}
+:is([aria-label="Thread composer"], [data-fmess-ui="composer"]) :is(:is([aria-label="Attach a file up to 100 MB"], [data-fmess-ui="attach"]), :is([aria-label="Open more actions"], [data-fmess-ui="more-actions"]), :is([aria-label="Choose a sticker"], [data-fmess-ui="sticker"]), :is([aria-label="Choose an emoji"], [data-fmess-ui="emoji"])) svg {
+  width: 16px !important;
+  height: 16px !important;
+  background: var(--gh-fg-muted);
+}
+:is([aria-label="Thread composer"], [data-fmess-ui="composer"]) :is(:is([aria-label="Attach a file up to 100 MB"], [data-fmess-ui="attach"]), :is([aria-label="Open more actions"], [data-fmess-ui="more-actions"]), :is([aria-label="Choose a sticker"], [data-fmess-ui="sticker"]), :is([aria-label="Choose an emoji"], [data-fmess-ui="emoji"])) svg * {
+  visibility: hidden;
+}
+:is([aria-label="Thread composer"], [data-fmess-ui="composer"]) :is([aria-label="Attach a file up to 100 MB"], [data-fmess-ui="attach"]) svg {
+  -webkit-mask: {{icon:paperclip-16}} center / 16px 16px no-repeat;
+}
+:is([aria-label="Thread composer"], [data-fmess-ui="composer"]) :is([aria-label="Open more actions"], [data-fmess-ui="more-actions"]) svg {
+  -webkit-mask: {{icon:plus-circle-16}} center / 16px 16px no-repeat;
+}
+:is([aria-label="Thread composer"], [data-fmess-ui="composer"]) :is([aria-label="Choose a sticker"], [data-fmess-ui="sticker"]) svg {
+  -webkit-mask: {{icon:image-16}} center / 16px 16px no-repeat;
+}
+:is([aria-label="Thread composer"], [data-fmess-ui="composer"]) :is([aria-label="Choose an emoji"], [data-fmess-ui="emoji"]) svg {
+  -webkit-mask: {{icon:smiley-16}} center / 16px 16px no-repeat;
+}
+:is([aria-label="Thread composer"], [data-fmess-ui="composer"]) [role="textbox"] {
+  font-size: 14px !important;
+  line-height: 20px !important;
+}
+/* The send button (there is text to send): the span holding it is flagged,
+   unless its button is Messenger's 👍 (its icon starts M16,9.1c). */
+:is([aria-label="Thread composer"], [data-fmess-ui="composer"]) > span:has(> [role="button"]:is([aria-label="Press enter to send"], [data-fmess-ui="send"])):not(:has(path[d^="M16,9.1c"])) {
+  --gh-send: 1;
+}
+@container style(--gh-send: 1) {
+  [role="button"] {
+    width: 40px !important;
+    height: 30px !important;
+    border-radius: 6px !important;
+    background: var(--gh-primary) !important;
+    box-shadow: inset 0 0 0 1px #1f232826 !important;
+    --hover-overlay: transparent !important;
+  }
+  [role="button"]:hover {
+    background: var(--gh-primary-hover) !important;
+  }
+  [role="button"] svg {
+    width: 16px !important;
+    height: 16px !important;
+    background: var(--gh-on-emphasis);
+    -webkit-mask: {{icon:paper-airplane-16}} center / 16px 16px no-repeat;
+  }
+  [role="button"] svg * {
+    visibility: hidden;
+  }
+}
+
+/* Replying (or a link's preview): the bar and the box read as one comment
+   box, the bar its grey top part. */
+html[data-fmess-chats] [role="main"] [data-fmess-ui="composer-bar"] {
+  margin: 8px 16px 0 !important;
+  padding: 8px 8px 0 !important;
+  overflow: visible !important;
+  box-sizing: border-box !important;
+  border: 1px solid var(--gh-border) !important;
+  border-bottom: 0 !important;
+  border-radius: 6px 6px 0 0 !important;
+  background: var(--gh-subtle) !important;
+}
+html[data-fmess-chats] [role="main"] [data-fmess-ui="composer-bar"] + [data-fmess-ui="composer"] {
+  margin-top: 0 !important;
+  border-top-color: var(--gh-border-muted) !important;
+  border-radius: 0 0 6px 6px !important;
+}
+
+/* Details: the side panel, white with a line at its left. */
+html[data-fmess-chats] [role="main"] [data-fmess-ui="details"] {
+  background: var(--gh-canvas) !important;
+  box-shadow: none !important;
+}
+
+/* Menus: Primer's ActionMenu: 12px corners, the floating shadow, no arrow,
+   items with 6px corners. The reaction picker keeps Messenger's shape. */
+[role="menu"]:not([data-fmess-ui="reactions"]) > div:first-child {
+  border-radius: 12px !important;
+  background: var(--gh-overlay) !important;
+  box-shadow: var(--gh-shadow) !important;
+}
+[role="menu"]:not([data-fmess-ui="reactions"]) > svg {
+  display: none !important;
+}
+[role="menu"] [role="menuitem"] {
+  border-radius: 6px !important;
+  --hover-overlay: var(--gh-hover) !important;
+}
+[role="menu"] [role="menuitem"] > [role="none"] {
+  border-radius: 6px !important;
+}
+[role="menu"] [role="menuitem"] span {
+  font-size: 14px !important;
+}
+[role="menu"] hr {
+  background: var(--gh-border-muted) !important;
+}
+
+/* Tooltips: Facebook draws them in the other mode than the page, dark on a
+   light page and light on a dark one; their text follows their background. */
+[role="tooltip"] .__fb-dark-mode,
+[role="tooltip"].__fb-dark-mode {
+  --primary-text: #f5f6f7 !important;
+  --secondary-text: #b0b3b8 !important;
+  --primary-icon: #f5f6f7 !important;
+  --secondary-icon: #b0b3b8 !important;
+}
+[role="tooltip"] .__fb-light-mode,
+[role="tooltip"].__fb-light-mode {
+  --primary-text: #050505 !important;
+  --secondary-text: #65676b !important;
+  --primary-icon: #050505 !important;
+  --secondary-icon: #65676b !important;
+}
+
+/* Facebook's dark islands on a light page (toasts such as "All chats
+   loaded.", tooltips, the photo viewer) keep their light text. */
+html:not([data-fmess-dark]) .__fb-dark-mode {
+  --primary-text: #e4e6eb !important;
+  --secondary-text: #b0b3b8 !important;
+  --primary-icon: #e4e6eb !important;
+  --secondary-icon: #b0b3b8 !important;
+}
+
+/* Primer's tooltip: always dark (#25292e, #3d444d in dark mode), white
+   12px type, 6px corners. Its background no longer follows the mode, so
+   neither does its text: white in both. */
+html [role="tooltip"] {
+  background: var(--gh-tooltip) !important;
+  border-radius: 6px !important;
+  padding: 8px 10px !important;
+  box-shadow: none !important;
+}
+html [role="tooltip"],
+html [role="tooltip"] .__fb-dark-mode,
+html [role="tooltip"] .__fb-light-mode,
+html [role="tooltip"].__fb-dark-mode,
+html [role="tooltip"].__fb-light-mode {
+  --primary-text: #ffffff !important;
+  --secondary-text: #ffffff !important;
+  --primary-icon: #ffffff !important;
+  --secondary-icon: #ffffff !important;
+}
+html [role="tooltip"] span {
+  font-size: 12px !important;
+  line-height: 16px !important;
+  color: #ffffff !important;
+}

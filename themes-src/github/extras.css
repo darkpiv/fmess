@@ -1,0 +1,194 @@
+
+/* ---- The jokes: GitHub things in Messenger's places ---- */
+
+/* Replying: the quoted message is the other side of a merge conflict.
+   "<<<<<<< HEAD" above it, "=======" under it, then your message box: the
+   two sides, on the conflict editor's yellow. */
+html[data-fmess-chats] [role="main"] [data-fmess-ui="composer-bar"] {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  background: var(--gh-attention-muted) !important;
+}
+html[data-fmess-chats] [role="main"] [data-fmess-ui="composer-bar"]::before,
+html[data-fmess-chats] [role="main"] [data-fmess-ui="composer-bar"]::after {
+  display: block;
+  flex: none;
+  font: 600 12px/18px var(--gh-mono);
+  color: var(--gh-attention);
+  white-space: pre;
+  pointer-events: none;
+}
+html[data-fmess-chats] [role="main"] [data-fmess-ui="composer-bar"]::before {
+  content: "<<<<<<< HEAD";
+}
+html[data-fmess-chats] [role="main"] [data-fmess-ui="composer-bar"]::after {
+  content: "=======";
+  padding-bottom: 4px;
+}
+
+/* Someone typing: a check running, GitHub's amber dot pulsing. */
+html[data-fmess-chats] [role="main"] [role="log"] [aria-hidden="true"]:not([data-message-id] *):has(> div[role="presentation"] + div [role="presentation"]) {
+  align-items: center !important;
+}
+html[data-fmess-chats] [role="main"] [role="log"] [aria-hidden="true"]:not([data-message-id] *):has(> div[role="presentation"] + div [role="presentation"])::after {
+  content: "\2026";
+  margin-left: 8px;
+  padding-left: 16px;
+  background: radial-gradient(circle 4px at 4px 50%, var(--gh-attention-emphasis) 95%, transparent 100%) no-repeat;
+  font: 12px/20px var(--gh-mono);
+  color: var(--gh-fg-muted);
+  white-space: nowrap;
+  animation: gh-check 1.2s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+html[data-fmess-chats][lang^="en"] [role="main"] [role="log"] [aria-hidden="true"]:not([data-message-id] *):has(> div[role="presentation"] + div [role="presentation"])::after {
+  content: "1 check in progress\2026";
+}
+html[data-fmess-chats][lang^="vi"] [role="main"] [role="log"] [aria-hidden="true"]:not([data-message-id] *):has(> div[role="presentation"] + div [role="presentation"])::after {
+  content: "1 check \0111" "ang ch\1EA1y\2026";
+}
+@keyframes gh-check {
+  from { opacity: 0.45; }
+  to { opacity: 1; }
+}
+
+/* The file tree's diffstat: five squares at each chat's top right, a
+   different mix down the list (by position: CSS can't count anything
+   real). Read chats ("viewed" files) have them faded; hovering a row hides
+   them for Messenger's ⋯. */
+html[data-fmess-chats] [data-fmess-list] [role="row"] a[role="link"] {
+  position: relative !important;
+  --gh-s1: var(--gh-stat-add);
+  --gh-s2: var(--gh-stat-add);
+  --gh-s3: var(--gh-stat-add);
+  --gh-s4: var(--gh-stat-del);
+  --gh-s5: var(--gh-stat-none);
+}
+:root {
+  --gh-stat-add: #1f883d;
+  --gh-stat-del: #cf222e;
+  --gh-stat-none: #d1d9e0;
+}
+html[data-fmess-dark] {
+  --gh-stat-add: #238636;
+  --gh-stat-del: #da3633;
+  --gh-stat-none: #3d444d;
+}
+html[data-fmess-chats] [data-fmess-list] [role="row"]:nth-child(5n + 2) a[role="link"] {
+  --gh-s4: var(--gh-stat-add);
+  --gh-s5: var(--gh-stat-add);
+}
+html[data-fmess-chats] [data-fmess-list] [role="row"]:nth-child(5n + 3) a[role="link"] {
+  --gh-s2: var(--gh-stat-del);
+  --gh-s3: var(--gh-stat-del);
+  --gh-s4: var(--gh-stat-none);
+}
+html[data-fmess-chats] [data-fmess-list] [role="row"]:nth-child(5n + 4) a[role="link"] {
+  --gh-s3: var(--gh-stat-del);
+  --gh-s4: var(--gh-stat-del);
+}
+html[data-fmess-chats] [data-fmess-list] [role="row"]:nth-child(5n) a[role="link"] {
+  --gh-s1: var(--gh-stat-del);
+  --gh-s2: var(--gh-stat-del);
+  --gh-s3: var(--gh-stat-del);
+  --gh-s4: var(--gh-stat-del);
+}
+html[data-fmess-chats] [data-fmess-list] [role="row"] a[role="link"]::after {
+  content: "";
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 38px;
+  height: 6px;
+  background:
+    linear-gradient(var(--gh-s1), var(--gh-s1)) 0 0 / 6px 6px no-repeat,
+    linear-gradient(var(--gh-s2), var(--gh-s2)) 8px 0 / 6px 6px no-repeat,
+    linear-gradient(var(--gh-s3), var(--gh-s3)) 16px 0 / 6px 6px no-repeat,
+    linear-gradient(var(--gh-s4), var(--gh-s4)) 24px 0 / 6px 6px no-repeat,
+    linear-gradient(var(--gh-s5), var(--gh-s5)) 32px 0 / 6px 6px no-repeat;
+  border-radius: 1px;
+  pointer-events: none;
+}
+html[data-fmess-chats] [data-fmess-list] [role="row"] a[role="link"]:not(:has([role="button"]))::after {
+  opacity: 0.4;
+}
+html[data-fmess-chats] [data-fmess-list] [role="row"]:hover a[role="link"]::after {
+  visibility: hidden;
+}
+
+/* Unread chats in the strip under the window buttons, as the "Files
+   changed" tab with its Counter pill. Only where there is a strip (macOS):
+   its height follows --fmess-title-bar, so with none it is 0. */
+html[data-fmess-chats][data-fmess-unread]:not([data-fmess-media])::after {
+  content: "Files changed  " attr(data-fmess-unread);
+  position: fixed;
+  z-index: 2147483001;
+  top: calc((var(--fmess-title-bar, 0px) - 18px) / 2);
+  left: 50%;
+  translate: -50% 0;
+  height: min(18px, var(--fmess-title-bar, 0px));
+  overflow: hidden;
+  padding: 0 8px;
+  border-radius: 9px;
+  background: var(--gh-neutral-muted);
+  color: var(--gh-fg);
+  font: 500 12px/18px var(--gh-font);
+  white-space: pre;
+  pointer-events: none;
+}
+
+/* Details: a contribution graph heads the pane, 7 days by 20 weeks of
+   squares in GitHub's greens. Decoration: the pattern is stripes of
+   different periods laid over each other, cut into squares. */
+:root {
+  --gh-green-0: #eff2f5;
+  --gh-green-1: #aceebb66;
+  --gh-green-2: #4ac26b66;
+  --gh-green-3: #2da44e66;
+}
+html[data-fmess-dark] {
+  --gh-green-0: #151b23;
+  --gh-green-1: #0e444166;
+  --gh-green-2: #006d3266;
+  --gh-green-3: #26a64166;
+}
+html[data-fmess-chats] [role="main"] [data-fmess-ui="details"]::before {
+  content: "";
+  display: block;
+  flex: none;
+  width: 257px;
+  height: 88px;
+  margin: 16px auto 4px;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 39px, var(--gh-green-3) 39px 52px),
+    repeating-linear-gradient(90deg, transparent 0 65px, var(--gh-green-2) 65px 91px),
+    repeating-linear-gradient(0deg, transparent 0 26px, var(--gh-green-1) 26px 39px),
+    repeating-linear-gradient(0deg, transparent 0 52px, var(--gh-green-2) 52px 65px),
+    repeating-linear-gradient(90deg, transparent 0 91px, var(--gh-green-1) 91px 104px),
+    var(--gh-green-0);
+  -webkit-mask:
+    linear-gradient(90deg, #000 10px, transparent 10px) 0 0 / 13px 13px,
+    linear-gradient(#000 10px, transparent 10px) 0 0 / 13px 13px;
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  pointer-events: none;
+}
+
+/* Send, with text to send: GitHub's green split button, "Squash and merge"
+   (GitHub's own words; its UI is English everywhere). */
+@container style(--gh-send: 1) {
+  [role="button"] {
+    width: auto !important;
+    padding: 0 12px !important;
+  }
+  [role="button"] svg {
+    display: none !important;
+  }
+  [role="button"]::after {
+    content: "Squash and merge";
+    color: var(--gh-on-emphasis);
+    font: 500 13px/30px var(--gh-font);
+    white-space: nowrap;
+  }
+}

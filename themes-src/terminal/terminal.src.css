@@ -1,0 +1,46 @@
+/* fMess theme
+   name: Terminal
+   preview: #0b0d10 #0b0d10 #101216 #5fd787 #262b33
+*/
+
+/* A modern terminal: dark by default, paper-light while Messenger is light. */
+:root {
+  --t-bg: #fbfaf6;
+  --t-bg-2: #f1efe8;
+  --t-fg: #2b2d31;
+  --t-cmd: #0d0e10;
+  --t-dim: #6e7178;
+  --t-prompt: #13803a;
+  --t-accent: #0b62c4;
+  --t-name: #8a3fb7;
+  --t-warn: #9a6200;
+  --t-cursor: #0d0e10;
+  --t-line: #d9d5ca;
+  --t-hover: #0000000f;
+  --t-hl: #0000001a;
+  --t-selection: #0b62c433;
+  --t-sel-bg: #2b2d31;
+  --t-sel-fg: #fbfaf6;
+  --t-shadow: #d9d5ca;
+  --t-pic-filter: grayscale(1);
+}
+html[data-fmess-dark] {
+  --t-bg: #101216;
+  --t-bg-2: #0b0d10;
+  --t-fg: #c9ced6;
+  --t-cmd: #f2f4f8;
+  --t-dim: #7d8590;
+  --t-prompt: #5fd787;
+  --t-accent: #61afef;
+  --t-name: #d19dff;
+  --t-warn: #e5c07b;
+  --t-cursor: #f2f4f8;
+  --t-line: #262b33;
+  --t-hover: #ffffff14;
+  --t-hl: #ffffff1f;
+  --t-selection: #61afef55;
+  --t-sel-bg: #c9ced6;
+  --t-sel-fg: #101216;
+  --t-shadow: #000000;
+}
+{{include:base.css}}

@@ -1,0 +1,20 @@
+:root {
+  --t-bg: #050c06;
+  --t-bg-2: #030803;
+  --t-fg: #9fe8ab;
+  --t-cmd: #d4ffda;
+  --t-dim: #4c8f57;
+  --t-prompt: #39ff6a;
+  --t-accent: #39ff6a;
+  --t-name: #7dffa0;
+  --t-warn: #c8ff5a;
+  --t-cursor: #39ff6a;
+  --t-line: #12331a;
+  --t-hover: #39ff6a14;
+  --t-hl: #39ff6a26;
+  --t-selection: #39ff6a44;
+  --t-sel-bg: #39ff6a;
+  --t-sel-fg: #031004;
+  --t-shadow: #0b2410;
+  --t-pic-filter: grayscale(1) sepia(1) hue-rotate(65deg) saturate(2.5) brightness(0.9);
+}

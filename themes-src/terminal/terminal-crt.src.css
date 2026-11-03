@@ -1,0 +1,9 @@
+/* fMess theme
+   name: Terminal CRT
+   preview: #020602 #020602 #050c06 #39ff6a #12331a
+*/
+
+/* Terminal Green on an old monitor: scanlines and glow. */
+{{include:green.tokens.css}}
+{{include:base.css}}
+{{include:crt.css}}

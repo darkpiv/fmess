@@ -1,0 +1,20 @@
+
+/* ---- CRT: scanlines, a dark edge, a glow on the text ----
+   One fixed layer over the window, drawn once on its own compositing layer
+   (will-change), never hit by the pointer. */
+html[data-fmess-chats] body::after {
+  content: "";
+  position: fixed;
+  z-index: 2147482000;
+  inset: 0;
+  background:
+    repeating-linear-gradient(to bottom, #00000033 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse at center, transparent 60%, #00000080 100%);
+  will-change: transform;
+  pointer-events: none;
+}
+html[data-fmess-chats] [role="main"] [data-message-id] [dir="auto"],
+html[data-fmess-chats] [data-fmess-list] [role="row"] span[dir="auto"],
+html[data-fmess-chats] [role="main"] [data-fmess-ui="chat-header"] :is(h1, h2, h3) span {
+  text-shadow: 0 0 5px color-mix(in srgb, var(--t-prompt) 55%, transparent);
+}

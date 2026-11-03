@@ -1,0 +1,679 @@
+
+/* Messenger as a terminal: everything in one monospace font, no bubbles,
+   no corners. Your messages are commands ("$" and bright text), theirs the
+   output; names as IRC's <name>; dates as log separators; the message box
+   is a shell prompt with a block cursor. The variant files set the --t-*
+   colours and include this. Font: JetBrains Mono (SIL OFL 1.1, font/OFL.txt),
+   latin, latin-ext and Vietnamese subsets from @fontsource-variable. */
+
+@font-face {
+  font-family: "fMess JetBrains Mono";
+  src: {{font:font/jetbrains-mono-latin-wght-normal.woff2}} format("woff2");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "fMess JetBrains Mono";
+  src: {{font:font/jetbrains-mono-latin-ext-wght-normal.woff2}} format("woff2");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "fMess JetBrains Mono";
+  src: {{font:font/jetbrains-mono-vietnamese-wght-normal.woff2}} format("woff2");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+:root {
+  --t-mono: "fMess JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+/* Messenger's own colours, in the terminal's. */
+:root,
+.__fb-dark-mode,
+.__fb-light-mode,
+[style*="--chat-outgoing-message-bubble-background-color"] {
+  --accent: var(--t-prompt) !important;
+  --primary-button-background: var(--t-prompt) !important;
+  --primary-deemphasized-button-background: var(--t-hl) !important;
+  --primary-deemphasized-button-text: var(--t-fg) !important;
+  --text-highlight: var(--t-selection) !important;
+  --primary-text: var(--t-fg) !important;
+  --primary-icon: var(--t-dim) !important;
+  --secondary-text: var(--t-dim) !important;
+  --secondary-icon: var(--t-dim) !important;
+  --placeholder-text: var(--t-dim) !important;
+  --placeholder-icon: var(--t-dim) !important;
+  --blue-link: var(--t-accent) !important;
+  --divider: var(--t-line) !important;
+  --web-wash: var(--t-bg) !important;
+  --surface-background: var(--t-bg) !important;
+  --card-background: var(--t-bg) !important;
+  --messenger-card-background: var(--t-bg) !important;
+  --comment-background: var(--t-bg-2) !important;
+  --input-background: var(--t-bg) !important;
+  --secondary-button-background: transparent !important;
+  --hover-overlay: var(--t-hover) !important;
+  --popover-background: var(--t-bg-2) !important;
+  --notification-badge: var(--t-warn) !important;
+  --focus-ring-blue: var(--t-accent) !important;
+
+  --chat-bubble-border-radius: 0 !important;
+  --chat-bubble-padding-vertical: 0 !important;
+  --chat-bubble-padding-horizontal: 0 !important;
+  --chat-outgoing-message-bubble-background-color: transparent !important;
+  --chat-outgoing-message-background-gradient: initial !important;
+  --chat-outgoing-message-text-color: var(--t-cmd) !important;
+  --chat-incoming-message-bubble-background-color: transparent !important;
+  --chat-message-text-color: var(--t-cmd) !important;
+  --chat-incoming-message-text-color: var(--t-fg) !important;
+  --chat-admin-text-color: var(--t-dim) !important;
+  --chat-replied-message-background-color: var(--t-bg-2) !important;
+  --chat-composer-background-color: transparent !important;
+  --chat-composer-input-background-color: transparent !important;
+  --chat-composer-button-color: var(--t-dim) !important;
+  --chat-composer-caret-color: var(--t-cursor) !important;
+  --chat-edit-message-overlay-color: var(--t-hover) !important;
+  --chat-scrollbar-thumb-color: var(--t-line) !important;
+  --mwp-primary-theme-color: var(--t-prompt) !important;
+  --mwp-header-background-color: var(--t-bg-2) !important;
+  --mwp-header-button-color: var(--t-dim) !important;
+  --mwp-header-text-color: var(--t-fg) !important;
+  --mwp-subheader-text-color: var(--t-dim) !important;
+  --mwp-message-row-background: transparent !important;
+  --reaction-pill-background-color: var(--t-bg-2) !important;
+  --reaction-pill-multireact-selected-color: var(--t-hl) !important;
+}
+html,
+html body,
+html :is(div, span, a, h1, h2, h3, h4, input, textarea, button, label, p) {
+  font-family: var(--t-mono) !important;
+}
+html,
+html body {
+  background: var(--t-bg) !important;
+}
+
+/* The strip under the window buttons: the terminal's tab bar, its title
+   in the middle. Its height follows --fmess-title-bar: none off macOS. */
+html[data-fmess-chats]::before {
+  content: "fmess \2014  zsh";
+  position: fixed;
+  z-index: 2147483000;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--fmess-title-bar, 0px);
+  overflow: hidden;
+  background: var(--t-bg-2);
+  box-shadow: inset 0 -1px 0 var(--t-line);
+  color: var(--t-dim);
+  font: 12px var(--t-mono);
+  line-height: var(--fmess-title-bar, 0px);
+  text-align: center;
+  white-space: pre;
+  pointer-events: none;
+}
+/* Unread chats: the shell's "You have new mail", at the strip's right. */
+html[data-fmess-chats][data-fmess-unread]:not([data-fmess-media])::after {
+  content: "\2709  " attr(data-fmess-unread);
+  position: fixed;
+  z-index: 2147483001;
+  top: 0;
+  right: 12px;
+  height: var(--fmess-title-bar, 0px);
+  overflow: hidden;
+  color: var(--t-warn);
+  font: 600 12px/1 var(--t-mono);
+  line-height: var(--fmess-title-bar, 0px);
+  white-space: pre;
+  pointer-events: none;
+}
+html[data-fmess-chats][lang^="en"][data-fmess-unread]:not([data-fmess-media])::after {
+  content: "You have new mail: " attr(data-fmess-unread);
+}
+html[data-fmess-chats][lang^="vi"][data-fmess-unread]:not([data-fmess-media])::after {
+  content: "Bạn có thư mới: " attr(data-fmess-unread);
+}
+html[data-fmess-media]::before,
+html[data-fmess-media]::after,
+html[data-fmess-media] body::before,
+html[data-fmess-media] body::after {
+  display: none !important;
+}
+
+/* Chat list: a listing. "~/" before the title, "$" for the search's
+   magnifier, filters in [brackets], the open chat in reverse video, a "*"
+   before unread ones, small grey pictures. */
+html[data-fmess-chats] [data-fmess-list] {
+  background: var(--t-bg-2) !important;
+}
+html[data-fmess-chats] [data-fmess-list] h1,
+html[data-fmess-chats] [data-fmess-list] h1 span {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  line-height: 24px !important;
+  color: var(--t-prompt) !important;
+}
+html[data-fmess-chats] [data-fmess-list] h1::before {
+  content: "~/";
+  color: var(--t-accent);
+}
+html[data-fmess-chats] #fmess-account {
+  border-radius: 2px !important;
+}
+html[data-fmess-chats] [data-fmess-list] :is([aria-label="Settings, help and more"], [data-fmess-ui="list-menu"], a[href="/messages/new/"]) {
+  border-radius: 0 !important;
+  --secondary-button-background: transparent !important;
+}
+html[data-fmess-chats] [data-fmess-list] label:has(input[type="search"]) {
+  height: 32px !important;
+  box-sizing: border-box !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: inset 0 -1px 0 var(--t-line) !important;
+}
+html[data-fmess-chats] [data-fmess-list] label:has(input[type="search"]):focus-within {
+  box-shadow: inset 0 -1px 0 var(--t-prompt) !important;
+}
+html[data-fmess-chats] [data-fmess-list] label > span:has(> svg) {
+  position: relative !important;
+}
+html[data-fmess-chats] [data-fmess-list] label > span > svg {
+  visibility: hidden !important;
+}
+html[data-fmess-chats] [data-fmess-list] label > span:has(> svg)::after {
+  content: "$";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--t-prompt);
+  font: 700 14px/1 var(--t-mono);
+  pointer-events: none;
+}
+html[data-fmess-chats] [data-fmess-list] input[type="search"] {
+  font-size: 13px !important;
+  caret-color: var(--t-cursor) !important;
+}
+html[data-fmess-chats] [data-fmess-list] [role="tablist"] {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  gap: 4px !important;
+  align-items: center !important;
+}
+html[data-fmess-chats] [data-fmess-list] [role="tablist"]::-webkit-scrollbar {
+  display: none;
+}
+html[data-fmess-chats] [data-fmess-list] [role="tablist"] > * {
+  flex: none !important;
+}
+html[data-fmess-chats] [data-fmess-list] [role="tablist"] > :not(:has([role="tab"])) {
+  display: none !important;
+}
+html[data-fmess-chats] [data-fmess-list] [role="tab"] {
+  height: 24px !important;
+  padding: 0 2px !important;
+  box-sizing: border-box !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  --primary-deemphasized-button-text: var(--t-dim) !important;
+  --primary-text: var(--t-dim) !important;
+  --secondary-text: var(--t-dim) !important;
+}
+html[data-fmess-chats] [data-fmess-list] [role="tab"]::before {
+  content: "[";
+}
+html[data-fmess-chats] [data-fmess-list] [role="tab"]::after {
+  content: "]";
+}
+html[data-fmess-chats] [data-fmess-list] [role="tab"]::before,
+html[data-fmess-chats] [data-fmess-list] [role="tab"]::after {
+  color: var(--t-dim);
+  font: 13px/24px var(--t-mono);
+}
+html[data-fmess-chats] [data-fmess-list] [role="tab"][aria-selected="true"] {
+  background: var(--t-sel-bg) !important;
+  --primary-deemphasized-button-text: var(--t-sel-fg) !important;
+  --primary-text: var(--t-sel-fg) !important;
+  --secondary-text: var(--t-sel-fg) !important;
+}
+html[data-fmess-chats] [data-fmess-list] [role="tab"][aria-selected="true"]::before,
+html[data-fmess-chats] [data-fmess-list] [role="tab"][aria-selected="true"]::after {
+  color: var(--t-sel-fg);
+}
+html[data-fmess-chats] [data-fmess-list] [role="tab"] span {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+html[data-fmess-chats] [data-fmess-list] [role="row"] {
+  padding-inline: 4px !important;
+}
+html[data-fmess-chats] [data-fmess-list] [role="row"] a[role="link"] {
+  position: relative !important;
+  border-radius: 0 !important;
+  --t-row: 1;
+  --hover-overlay: transparent !important;
+}
+html[data-fmess-chats] [data-fmess-list] [role="row"] a[role="link"] > div {
+  min-height: 40px !important;
+  margin: 0 !important;
+  --x-paddingBlock: 4px !important;
+  --x-paddingInline: 14px !important;
+  padding: 4px 8px 4px 14px !important;
+}
+/* No pictures in a terminal: a chat is its name. */
+html[data-fmess-chats] [data-fmess-list] [role="row"] a[role="link"] > div > div > div:first-child {
+  display: none !important;
+}
+html[data-fmess-chats] [data-fmess-list] [role="row"] a[role="link"] > div > div > div:nth-child(2) > div {
+  padding: 0 !important;
+}
+html[data-fmess-chats] [data-fmess-list] [role="row"] a[role="link"]:hover {
+  background: var(--t-hover) !important;
+}
+html[data-fmess-chats] [data-fmess-list] [role="row"] a[role="link"][aria-current="page"] {
+  background: var(--t-sel-bg) !important;
+  --primary-text: var(--t-sel-fg) !important;
+  --secondary-text: var(--t-sel-fg) !important;
+  --accent: var(--t-sel-fg) !important;
+}
+html[data-fmess-chats] [data-fmess-list] [role="row"] a[role="link"]:has([role="button"])::before {
+  content: "*";
+  position: absolute;
+  left: 3px;
+  top: 50%;
+  translate: 0 -50%;
+  color: var(--t-prompt);
+  font: 700 13px/1 var(--t-mono);
+  pointer-events: none;
+}
+html[data-fmess-chats] [data-fmess-list] [role="row"] a[role="link"][aria-current="page"]:has([role="button"])::before {
+  color: var(--t-sel-fg);
+}
+@container style(--t-row: 1) {
+  span[dir="auto"] {
+    font-size: 12px !important;
+    line-height: 16px !important;
+  }
+  div > span[dir="auto"]:first-child,
+  div > span[dir="auto"]:first-child span {
+    font-size: 13px !important;
+    line-height: 18px !important;
+  }
+  div[style*="height: 8px"] {
+    height: 2px !important;
+  }
+}
+
+/* The chat: the terminal's screen. */
+html[data-fmess-chats] [role="main"] [data-mw-file-dropzone] {
+  background: var(--t-bg) !important;
+  --messenger-card-background: transparent !important;
+}
+html[data-fmess-chats] [role="main"] [data-mw-file-dropzone] [style*="background-image"]:has([role="log"]) {
+  background: transparent !important;
+}
+
+/* Header: flat, a line under it, the name in the prompt's colour. */
+html[data-fmess-chats] [role="main"] [data-fmess-ui="chat-header"] {
+  background: var(--t-bg-2) !important;
+  border-bottom: 1px solid var(--t-line) !important;
+  box-shadow: none !important;
+}
+html[data-fmess-chats] [role="main"] [data-fmess-ui="chat-header"] :is(h1, h2, h3) span {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  line-height: 20px !important;
+  color: var(--t-prompt) !important;
+}
+html[data-fmess-chats] [role="main"] :is(:is([aria-label="Start a voice call"], [data-fmess-ui="audio-call"]), :is([aria-label="Start a video call"], [data-fmess-ui="video-call"]), :is([aria-label="Conversation information"], [data-fmess-ui="info"])) {
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+/* Messages: lines of a session. Every row starts at the left; yours carry
+   the "$" prompt and bright text, theirs are plain output. Your rows are the
+   ones whose first column is the read-receipt one (Teams' --tm-own);
+   Messenger lays them out reversed, at the right: here they are turned back
+   to the left. */
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"] {
+  /* Moved with a margin, not padding: Messenger places a reply's quote
+     and the reaction pills from the row's edge, so padding left them
+     behind, over the picture and the text. */
+  position: relative !important;
+  margin-left: 22px !important;
+  width: calc(100% - 22px) !important;
+  box-sizing: border-box !important;
+}
+/* A line with reactions leaves room under it for their pills. */
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"]:has([role="button"] > span > div[role="none"] > div > div > span > img) {
+  padding-bottom: 10px !important;
+}
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"]:has(> [role="presentation"]:first-child > [role="presentation"] > [role="none"]) {
+  flex-direction: row !important;
+  justify-content: flex-start !important;
+  --t-own: 1;
+}
+@container style(--t-own: 1) {
+  [role="presentation"] {
+    align-items: flex-start !important;
+  }
+}
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"]:has(> [role="presentation"]:first-child > [role="presentation"] > [role="none"])::before {
+  content: "$";
+  position: absolute;
+  left: -14px;
+  top: 0;
+  color: var(--t-prompt);
+  font: 700 13px/20px var(--t-mono);
+  pointer-events: none;
+}
+html[data-fmess-chats] [role="main"] [data-message-id] [role="presentation"] {
+  border-radius: 0 !important;
+}
+html[data-fmess-chats] [role="main"] [data-message-id] [dir="auto"] {
+  font-size: 13px !important;
+  line-height: 20px !important;
+}
+html[data-fmess-chats] [role="main"] [data-message-id] a {
+  text-decoration: underline !important;
+}
+/* No pictures beside lines: who said it is the <name> line over each
+   group of theirs. Their rows' first column is the picture's; yours is
+   the read receipt's, which stays. (If `not` in a style query isn't
+   supported, the pictures just stay.) */
+@container not style(--t-own: 1) {
+  html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"] > [role="presentation"]:first-child {
+    display: none !important;
+  }
+}
+/* Names over a group's messages: IRC's <name>. Messenger hides the name
+   in a 1:1 chat (it is only for screen readers); with no pictures it is
+   the only way to tell who spoke, so it is shown. Over your own lines
+   (their "$" says it) the heading stays out. */
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] h4 {
+  margin-inline-start: 0 !important;
+  padding-inline-start: 0 !important;
+}
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] h4 span {
+  position: static !important;
+  width: auto !important;
+  height: auto !important;
+  clip: auto !important;
+  clip-path: none !important;
+  overflow: visible !important;
+  white-space: nowrap !important;
+  opacity: 1 !important;
+  font-size: 13px !important;
+  line-height: 20px !important;
+  font-weight: 700 !important;
+  color: var(--t-name) !important;
+}
+@container style(--t-own: 1) {
+  html[data-fmess-chats] [role="main"] [data-scope="messages_table"] h4 {
+    display: none !important;
+  }
+}
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] h4 span:not(:has(span))::before {
+  content: "<";
+  color: var(--t-dim);
+  font: 700 13px/20px var(--t-mono);
+}
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] h4 span:not(:has(span))::after {
+  content: ">";
+  color: var(--t-dim);
+  font: 700 13px/20px var(--t-mono);
+}
+/* Dates: a log separator. */
+html[data-fmess-chats] [role="main"] [data-scope="date_break"] {
+  margin: 0 !important;
+  padding: 8px 0 !important;
+  background: transparent !important;
+}
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"]:has([data-scope="date_break"]) {
+  margin-left: 0 !important;
+  width: 100% !important;
+}
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"]:has([data-scope="date_break"])::before {
+  content: none;
+}
+html[data-fmess-chats] [role="main"] [data-scope="date_break"] > span > span {
+  display: inline-block !important;
+  padding: 0 !important;
+  background: transparent !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  line-height: 20px !important;
+  white-space: nowrap !important;
+  color: var(--t-dim) !important;
+}
+html[data-fmess-chats] [role="main"] [data-scope="date_break"] > span > span::before {
+  content: "-- ";
+}
+html[data-fmess-chats] [role="main"] [data-scope="date_break"] > span > span::after {
+  content: " --";
+}
+/* Someone typing: the cursor blinks after their dots. */
+html[data-fmess-chats] [role="main"] [role="log"] [aria-hidden="true"]:not([data-message-id] *):has(> div[role="presentation"] + div [role="presentation"]) {
+  align-items: center !important;
+}
+html[data-fmess-chats] [role="main"] [role="log"] [aria-hidden="true"]:not([data-message-id] *):has(> div[role="presentation"] + div [role="presentation"])::after {
+  content: "\2588";
+  margin-left: 6px;
+  color: var(--t-cursor);
+  font: 13px/20px var(--t-mono);
+  animation: t-blink 1s steps(1) infinite;
+  pointer-events: none;
+}
+@keyframes t-blink {
+  50% { opacity: 0; }
+}
+/* Reactions under a message: [boxes]. */
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] [role="button"] > span > div[role="none"]:has(> div > div > span > img) {
+  border: 1px solid var(--t-line) !important;
+  border-radius: 0 !important;
+  background: var(--t-bg-2) !important;
+  box-shadow: none !important;
+}
+/* A message's hover actions (react, reply, more): they float over the line
+   at its right, a flat box with a hard shadow, so hovering doesn't move the
+   lines. */
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] [role="toolbar"] {
+  position: static !important;
+}
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"] > [role="presentation"]:has(> [role="presentation"] > [role="toolbar"]) {
+  position: static !important;
+}
+html[data-fmess-chats] [role="main"] [role="toolbar"] > [role="presentation"] > [role="presentation"]:has([role="button"]) {
+  position: absolute !important;
+  z-index: 2 !important;
+  top: 50% !important;
+  translate: 0 -50%;
+  left: auto !important;
+  right: 8px !important;
+  flex-direction: row !important;
+  width: max-content !important;
+  max-width: none !important;
+  height: auto !important;
+  margin: 0 !important;
+  align-items: center !important;
+  padding: 1px !important;
+  border: 1px solid var(--t-line) !important;
+  border-radius: 0 !important;
+  background: var(--t-bg-2) !important;
+  box-shadow: 3px 3px 0 var(--t-shadow) !important;
+}
+
+/* Composer: the shell prompt. "user@fmess:~$" in the prompt's colours
+   before the box, a blinking block while it is empty, the send button a
+   reverse-video "⏎". Messenger's 👍 (marked "send" on an empty box too)
+   keeps its own look. */
+html[data-fmess-chats] [role="main"] div:has(> :is([aria-label="Thread composer"], [data-fmess-ui="composer"])) {
+  background: var(--t-bg-2) !important;
+  box-shadow: inset 0 1px 0 var(--t-line) !important;
+}
+html[data-fmess-chats] [role="main"] [role="region"]:is([aria-label="Thread composer"], [data-fmess-ui="composer"]) {
+  margin: 0 !important;
+  min-height: 44px !important;
+  padding: 4px 8px !important;
+  box-sizing: border-box !important;
+  align-items: center !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+:is([aria-label="Thread composer"], [data-fmess-ui="composer"]) > div:has([role="textbox"]) {
+  position: relative !important;
+  padding-left: 14.5ch !important;
+  font: 13px/20px var(--t-mono) !important;
+}
+:is([aria-label="Thread composer"], [data-fmess-ui="composer"]) > div:has([role="textbox"])::before {
+  content: "user@fmess:~$";
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  translate: 0 -50%;
+  font: 700 13px/20px var(--t-mono);
+  white-space: pre;
+  background: linear-gradient(90deg, var(--t-prompt) 0 10ch, var(--t-fg) 10ch 11ch, var(--t-accent) 11ch 12ch, var(--t-fg) 12ch);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  pointer-events: none;
+}
+:is([aria-label="Thread composer"], [data-fmess-ui="composer"]) [role="textbox"] {
+  font-size: 13px !important;
+  line-height: 20px !important;
+  caret-color: var(--t-cursor) !important;
+}
+:is([aria-label="Thread composer"], [data-fmess-ui="composer"]) [role="textbox"] + div[aria-hidden="true"] > div {
+  font-size: 0 !important;
+}
+:is([aria-label="Thread composer"], [data-fmess-ui="composer"]) [role="textbox"] + div[aria-hidden="true"] > div::after {
+  content: "\2588";
+  color: var(--t-cursor);
+  font: 13px/20px var(--t-mono);
+  animation: t-blink 1s steps(1) infinite;
+}
+:is([aria-label="Thread composer"], [data-fmess-ui="composer"]) :is(:is([aria-label="Attach a file up to 100 MB"], [data-fmess-ui="attach"]), :is([aria-label="Open more actions"], [data-fmess-ui="more-actions"]), :is([aria-label="Choose a sticker"], [data-fmess-ui="sticker"]), :is([aria-label="Choose a GIF"], [data-fmess-ui="gif"]), :is([aria-label="Choose an emoji"], [data-fmess-ui="emoji"]), :is([aria-label="Send a voice clip"], [data-fmess-ui="voice-clip"])) {
+  border-radius: 0 !important;
+}
+:is([aria-label="Thread composer"], [data-fmess-ui="composer"]) > span:has(> [role="button"]:is([aria-label="Press enter to send"], [data-fmess-ui="send"])):not(:has(path[d^="M16,9.1c"])) {
+  --t-send: 1;
+}
+@container style(--t-send: 1) {
+  [role="button"] {
+    width: auto !important;
+    height: 28px !important;
+    padding: 0 10px !important;
+    border-radius: 0 !important;
+    background: var(--t-prompt) !important;
+    --hover-overlay: transparent !important;
+  }
+  [role="button"] svg {
+    display: none !important;
+  }
+  [role="button"]::after {
+    content: "\23CE";
+    color: var(--t-sel-fg);
+    font: 700 14px/28px var(--t-mono);
+  }
+}
+
+/* Replying: a quote marked by a bar in the prompt's colour. */
+html[data-fmess-chats] [role="main"] [data-fmess-ui="composer-bar"] {
+  margin: 0 !important;
+  padding: 6px 8px 0 12px !important;
+  box-sizing: border-box !important;
+  border-radius: 0 !important;
+  background: var(--t-bg-2) !important;
+  box-shadow: inset 2px 0 0 var(--t-prompt), inset 0 1px 0 var(--t-line) !important;
+}
+
+/* Details: a side pane. */
+html[data-fmess-chats] [role="main"] [data-fmess-ui="details"] {
+  background: var(--t-bg-2) !important;
+  box-shadow: none !important;
+}
+
+/* Menus: flat boxes with a line and a hard shadow, square items. */
+[role="menu"]:not([data-fmess-ui="reactions"]) > div:first-child {
+  border-radius: 0 !important;
+  background: var(--t-bg-2) !important;
+  box-shadow: 0 0 0 1px var(--t-line), 4px 4px 0 var(--t-shadow) !important;
+}
+[role="menu"]:not([data-fmess-ui="reactions"]) > svg {
+  display: none !important;
+}
+[role="menu"] [role="menuitem"] {
+  border-radius: 0 !important;
+  --hover-overlay: var(--t-hover) !important;
+}
+[role="menu"] [role="menuitem"] > [role="none"] {
+  border-radius: 0 !important;
+}
+[role="menu"] [role="menuitem"] span {
+  font-size: 13px !important;
+}
+[role="menu"] hr {
+  background: var(--t-line) !important;
+}
+
+/* Tooltips: Facebook draws them in the other mode than the page, dark on a
+   light page and light on a dark one; their text follows their background. */
+[role="tooltip"] .__fb-dark-mode,
+[role="tooltip"].__fb-dark-mode {
+  --primary-text: #f5f6f7 !important;
+  --secondary-text: #b0b3b8 !important;
+  --primary-icon: #f5f6f7 !important;
+  --secondary-icon: #b0b3b8 !important;
+}
+[role="tooltip"] .__fb-light-mode,
+[role="tooltip"].__fb-light-mode {
+  --primary-text: #050505 !important;
+  --secondary-text: #65676b !important;
+  --primary-icon: #050505 !important;
+  --secondary-icon: #65676b !important;
+}
+
+/* Facebook's dark islands on a light page (toasts such as "All chats
+   loaded.", tooltips, the photo viewer) keep their light text. */
+html:not([data-fmess-dark]) .__fb-dark-mode {
+  --primary-text: #e4e6eb !important;
+  --secondary-text: #b0b3b8 !important;
+  --primary-icon: #e4e6eb !important;
+  --secondary-icon: #b0b3b8 !important;
+}
+
+/* Tooltips here: a reverse-video block, square. Its background is the
+   theme's text colour in every mode, so its text is the theme's background. */
+html [role="tooltip"] {
+  background: var(--t-sel-bg) !important;
+  border-radius: 0 !important;
+  padding: 6px 8px !important;
+  box-shadow: none !important;
+}
+html [role="tooltip"],
+html [role="tooltip"] .__fb-dark-mode,
+html [role="tooltip"] .__fb-light-mode,
+html [role="tooltip"].__fb-dark-mode,
+html [role="tooltip"].__fb-light-mode {
+  --primary-text: var(--t-sel-fg) !important;
+  --secondary-text: var(--t-sel-fg) !important;
+  --primary-icon: var(--t-sel-fg) !important;
+  --secondary-icon: var(--t-sel-fg) !important;
+}
+html [role="tooltip"] span {
+  font-size: 12px !important;
+  line-height: 16px !important;
+  color: var(--t-sel-fg) !important;
+}

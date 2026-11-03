@@ -1,0 +1,68 @@
+
+/* ---- Split view: GitHub's side-by-side diff ----
+   Theirs are removed lines in the left half, yours added lines in the
+   right half; the other half of each line is GitHub's grey "nothing here",
+   with a hairline down the middle. Each half has its own number column and
+   sign. A row's text stays in its half (padding in % of the row). */
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"] {
+  /* Theirs: moved 56px with a margin (see the unified view); the gutter
+     is the shadow and ::before. The row is 56px short of the chat, so its
+     middle is at 50% - 28px of the row. */
+  margin-left: 56px !important;
+  width: calc(100% - 56px) !important;
+  padding-right: 50% !important;
+  box-shadow: -56px 0 0 var(--gh-del-line) !important;
+  background: linear-gradient(90deg,
+    var(--gh-del-line) 0 calc(50% - 28px),
+    var(--gh-border) calc(50% - 28px) calc(50% - 27px),
+    var(--gh-empty-line) calc(50% - 27px)) !important;
+}
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"]:has(> [role="presentation"]:first-child > [role="presentation"] > [role="none"]) {
+  margin-left: 0 !important;
+  width: 100% !important;
+  box-shadow: none !important;
+  padding-left: calc(50% + 57px) !important;
+  padding-right: 0 !important;
+  background: linear-gradient(90deg,
+    var(--gh-empty-line) 0 50%,
+    var(--gh-border) 50% calc(50% + 1px),
+    var(--gh-add-num) calc(50% + 1px) calc(50% + 41px),
+    var(--gh-add-line) calc(50% + 41px)) !important;
+}
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"]::before {
+  left: -56px;
+  width: 40px;
+  padding: 0 8px 0 0;
+  background: var(--gh-del-num);
+}
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"]:has(> [role="presentation"]:first-child > [role="presentation"] > [role="none"])::before {
+  left: calc(50% + 1px);
+  padding-right: 8px;
+  background: transparent;
+}
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"]::after {
+  left: -16px;
+}
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"]:has(> [role="presentation"]:first-child > [role="presentation"] > [role="none"])::after {
+  left: calc(50% + 41px);
+}
+/* The date's row stays out of it (as in the unified view). */
+html[data-fmess-chats] [role="main"] [data-scope="messages_table"] > [role="presentation"]:has([data-scope="date_break"]) {
+  margin-left: 0 !important;
+  width: 100% !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+/* Hover actions: on the grey half, away from the text. */
+html[data-fmess-chats] [role="main"] [role="toolbar"] > [role="presentation"] > [role="presentation"]:has([role="button"]) {
+  left: auto !important;
+  right: 8px !important;
+}
+@container style(--gh-own: 1) {
+  html[data-fmess-chats] [role="main"] [role="toolbar"] > [role="presentation"] > [role="presentation"]:has([role="button"]) {
+    left: 8px !important;
+    right: auto !important;
+  }
+}

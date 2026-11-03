@@ -1,0 +1,27 @@
+/* fMess theme
+   name: Terminal Amber
+   preview: #080500 #080500 #0d0900 #ffb000 #3a2a0f
+*/
+
+/* An amber phosphor screen, the same in light and dark mode. */
+:root {
+  --t-bg: #0d0900;
+  --t-bg-2: #080500;
+  --t-fg: #f5c98a;
+  --t-cmd: #ffe7c2;
+  --t-dim: #9b6f2c;
+  --t-prompt: #ffb000;
+  --t-accent: #ffb000;
+  --t-name: #ffd27a;
+  --t-warn: #ff7a3d;
+  --t-cursor: #ffb000;
+  --t-line: #3a2a0f;
+  --t-hover: #ffb00014;
+  --t-hl: #ffb00026;
+  --t-selection: #ffb00044;
+  --t-sel-bg: #ffb000;
+  --t-sel-fg: #120c00;
+  --t-shadow: #2a1d06;
+  --t-pic-filter: grayscale(1) sepia(1) saturate(2.2) hue-rotate(-12deg);
+}
+{{include:base.css}}

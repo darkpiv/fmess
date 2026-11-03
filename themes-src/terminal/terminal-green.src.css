@@ -1,0 +1,8 @@
+/* fMess theme
+   name: Terminal Green
+   preview: #030803 #030803 #050c06 #39ff6a #12331a
+*/
+
+/* A green phosphor screen, the same in light and dark mode. */
+{{include:green.tokens.css}}
+{{include:base.css}}
